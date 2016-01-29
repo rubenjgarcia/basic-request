@@ -14,7 +14,6 @@ var urlLib = require('url');
 /**
  * Access a URL, send to callback. Parameters:
  *	- url: the URL to access.
- *	- json: optional contents to send, defaults to nothing.
  *	- params: optional additional parameters, currently supported:
  *		- retries: number of times to retry in case of error, default none.
  *		- timeout: time to wait for response in ms.
@@ -23,15 +22,9 @@ var urlLib = require('url');
  *		- statusCode: if status code is not 200.
  *		- readingResponse: if response could not be read.
  */
-exports.get = function(url, json, params, callback)
+exports.get = function(url, params, callback)
 {
-	if (typeof params == 'function')
-	{
-		callback = params;
-		params = json;
-		json = null;
-	}
-	send(url, 'GET', json, params, callback);
+	send(url, 'GET', null, params, callback);
 };
 
 /**
@@ -84,12 +77,12 @@ function send(url, method, json, params, callback)
 	callback = callback || function() {};
 	var options = urlLib.parse(url);
 	options.method = method;
-	if (typeof json == 'object')
+	if (json && typeof json == 'object')
 	{
 		params.body = JSON.stringify(json);
 		options.headers = {
 			'Content-Type': 'application/json',
-			'Content-Length': params.body.length,
+			'Content-Length': params.body.length
 		};
 	}
 	else if (json)
@@ -97,7 +90,7 @@ function send(url, method, json, params, callback)
 		params.body = json;
 		options.headers = {
 			'Content-Type': 'text/plain',
-			'Content-Length': params.body.length,
+			'Content-Length': params.body.length
 		};
 	}
 	else
@@ -117,7 +110,7 @@ function sendWithRetries(retries, options, params, callback)
 	{
 		protocol = https;
 	}
-	var request = protocol.get(options, function(response)
+	var request = protocol.request(options, function(response)
 	{
 		if (response.statusCode == 301 || response.statusCode == 302)
 		{
